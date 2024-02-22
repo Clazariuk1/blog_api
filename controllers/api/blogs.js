@@ -6,7 +6,7 @@ const Blog = require('../../models/blog')
 const indexBlogs = async ( _ , res, next) => {
     try {
         const blogs = await Blog.find({})
-        res.locals.data.blogs = blogs
+        res.locals.data.blogs = blogs // store ALL the user's blogs
         next()
     } catch (error) {
         res.status(400).json({ msg: error.message })
@@ -17,11 +17,11 @@ const indexBlogs = async ( _ , res, next) => {
 
 const createBlog = async (req, res, next) => {
     try {
-        req.body.user = req.user._id
+        req.body.user = req.user._id // THIS CONNECTS THE USER TO THE NEW BLOG
         const blog = await Blog.create(req.body)
-        req.user.blogs.addToSet(blog)
-        req.user.save()
-        res.locals.data.blog = blog
+        req.user.blogs.addToSet(blog) // THIS ADDS THE BLOG TO THE USER's ARRAY
+        req.user.save() // THIS SAVES THE USER DATA BECAUSE OF ABOVE ACTION
+        res.locals.data.blog = blog // THIS ALLOWS US TO RESPOND VIA EVENT LISTENER WITH BLOG. Res.locals is GLOBAL SCOPE by creation, this is why we use it.
         next()
     } catch (error) {
         res.status(400).json({ msg: error.message })
@@ -44,7 +44,7 @@ const showBlog = async (req, res, next) => {
 
 const updateBlog = async (req, res, next) => {
     try {
-        const blog = await Blog.findByIdAndUpdate(req.params.id, req.body, { new: true })
+        const blog = await Blog.findOneAndUpdate({_id: req.params.id, user: req.user._id}, req.body, { new: true })
         res.locals.data.blog = blog
         next()
     } catch (error) {
@@ -76,9 +76,9 @@ function jsonBlogs (_, res) {
 
 module.exports = {
     indexBlogs,
-    createBlog, 
-    showBlog, 
-    updateBlog, 
+    createBlog,
+    showBlog,
+    updateBlog,
     deleteBlog,
     jsonBlog,
     jsonBlogs
